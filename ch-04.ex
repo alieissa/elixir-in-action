@@ -72,8 +72,29 @@ defmodule TodoList.CsvImporter do
     import_file!(path)
     |> Stream.map(fn entry -> String.split(entry, ",") end)
     |> Stream.map(fn [date, title] ->
-      %{date: date, title: title}
+      %{date: Date.from_iso8601!(date), title: title}
     end)
     |> TodoList.new()
   end
+end
+
+# 4.3.2 Implementing a protocol
+defimpl String.Chars, for: TodoList do
+  def to_string(_) do
+    "#TodoList"
+  end
+end
+
+# 4.3.3 Built-in protocols
+defimpl Collectable, for: TodoList do
+  def into(original) do
+    {original, &into_callback/2}
+  end
+
+  defp into_callback(todo_list, {:cont, entry}) do
+    TodoList.add_entry(todo_list, entry)
+  end
+
+  defp into_callback(todo_list, :done), do: todo_list
+  defp into_callback(_todo_list, :halt), do: :ok
 end
